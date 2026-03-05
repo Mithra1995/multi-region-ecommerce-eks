@@ -3,27 +3,29 @@ version: 0.2
 env:
   variables:
     AWS_DEFAULT_REGION: us-east-1
+    ACCOUNT_ID: 555272931108
+    PRODUCT_REPO: product-service
+    CART_REPO: cart-service
 
 phases:
   pre_build:
     commands:
-      - echo Logging into Amazon ECR
-      - ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+      - echo Logging in to Amazon ECR
       - REPOSITORY_URI=$ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $REPOSITORY_URI
 
   build:
     commands:
       - echo Building product-service image
-      - docker build -t product-service ./microservices/product-service
-      - docker tag product-service:latest $REPOSITORY_URI/product-service:latest
+      - docker build -t $PRODUCT_REPO ./microservices/product-service
+      - docker tag $PRODUCT_REPO:latest $REPOSITORY_URI/$PRODUCT_REPO:latest
 
       - echo Building cart-service image
-      - docker build -t cart-service ./microservices/cart-service
-      - docker tag cart-service:latest $REPOSITORY_URI/cart-service:latest
+      - docker build -t $CART_REPO ./microservices/cart-service
+      - docker tag $CART_REPO:latest $REPOSITORY_URI/$CART_REPO:latest
 
   post_build:
     commands:
       - echo Pushing images to ECR
-      - docker push $REPOSITORY_URI/product-service:latest
-      - docker push $REPOSITORY_URI/cart-service:latest
+      - docker push $REPOSITORY_URI/$PRODUCT_REPO:latest
+      - docker push $REPOSITORY_URI/$CART_REPO:latest
