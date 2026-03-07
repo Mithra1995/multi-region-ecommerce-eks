@@ -3,10 +3,10 @@ kind: Service
 metadata:
   name: cart-service
 spec:
-  type: LoadBalancer
   selector:
     app: cart-service
   ports:
     - protocol: TCP
       port: 80
       targetPort: 3001
+  type: ClusterIP
