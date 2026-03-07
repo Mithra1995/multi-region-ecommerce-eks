@@ -1,0 +1,68 @@
+pipeline {
+    agent any
+
+    environment {
+        AWS_ACCOUNT_ID = "555272931108"
+        AWS_REGION = "us-east-1"
+        ECR_REPO_CART = "cart-service"
+        ECR_REPO_PRODUCT = "product-service"
+    }
+
+    stages {
+
+        stage('Clone Repository') {
+            steps {
+                git 'https://github.com/Mithra1995/multi-region-ecommerce-eks.git'
+            }
+        }
+
+        stage('Login to Amazon ECR') {
+            steps {
+                sh '''
+                aws ecr get-login-password --region $AWS_REGION | \
+                docker login --username AWS --password-stdin \
+                $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+                '''
+            }
+        }
+
+        stage('Build Docker Images') {
+            steps {
+                sh '''
+                docker build -t $ECR_REPO_CART ./microservices/cart-service
+                docker build -t $ECR_REPO_PRODUCT ./microservices/product-service
+                '''
+            }
+        }
+
+        stage('Tag Docker Images') {
+            steps {
+                sh '''
+                docker tag cart-service:latest \
+                $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/cart-service:latest
+
+                docker tag product-service:latest \
+                $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/product-service:latest
+                '''
+            }
+        }
+
+        stage('Push Images to ECR') {
+            steps {
+                sh '''
+                docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/cart-service:latest
+                docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/product-service:latest
+                '''
+            }
+        }
+
+        stage('Deploy to EKS') {
+            steps {
+                sh '''
+                kubectl apply -f k8s/
+                '''
+            }
+        }
+
+    }
+}
