@@ -3,8 +3,9 @@ kind: Ingress
 metadata:
   name: ecommerce-ingress
   annotations:
-    alb.ingress.kubernetes.io/scheme: internal
+    alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
     alb.ingress.kubernetes.io/subnets: subnet-0a552bdc5396fed10,subnet-01a41c7d8f03f8a6c,subnet-0263eaebbdd857253
 spec:
   ingressClassName: alb
